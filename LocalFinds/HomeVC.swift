@@ -7,18 +7,25 @@
 
 import UIKit
 
-class ResultsTableViewController: UITableViewController {
+class HomeVC: UITableViewController {
     
-    var places = [Result]()
-//    var results = ["BOK Center", "Vanguard", "Cain's Ballroom"]
+    var placeDetails = [PlaceDetail]()
+    //var placeDetails = ["BOK Center", "Vanguard", "Cain's Ballroom"]
 
     override func viewDidLoad() {
         super.viewDidLoad()
         
         NetworkManager.shared.getPlaces { places in
-            self.places = places
-            DispatchQueue.main.async {
+            
+            for place in places {
+                NetworkManager.shared.getPlaceDetails(fsqID: place.fsqID) { details in
+                    self.placeDetails.append(details)
+                }
+            }
+
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                 self.tableView.reloadData()
+                print(self.placeDetails)
             }
         }
         
@@ -28,21 +35,21 @@ class ResultsTableViewController: UITableViewController {
     }
 
     override func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return places.count
+        return placeDetails.count
     }
 
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let cell = tableView.dequeueReusableCell(withIdentifier: "POICell", for: indexPath)
-        cell.textLabel?.text = places[indexPath.row].name
-//        cell.textLabel?.text = results[indexPath.row]
+        cell.textLabel?.text = placeDetails[indexPath.row].name
+        //cell.textLabel?.text = placeDetails[indexPath.row]
         return cell
     }
     
     override func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // tapped point of interest == go to detail screen
+        let place = placeDetails[indexPath.row]
         let vc = DetailViewController()
-        vc.poi = places[indexPath.row].name
-        //vc.poi = results[indexPath.row]
+        vc.poi = place.name
+        vc.placeDetails = place
         
         self.navigationController?.pushViewController(vc, animated: true)
     }
